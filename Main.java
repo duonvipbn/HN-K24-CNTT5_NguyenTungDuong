@@ -1,6 +1,7 @@
 package BaiKiemTra;
 
 import java.util.ArrayList;
+import java.util.Optional;
 import java.util.Scanner;
 
 public class Main {
@@ -43,55 +44,81 @@ public class Main {
         }
     }
 
+    private static void addProduct() {
+        try {
+            System.out.print("Nhap ID: ");
+            int id = Integer.parseInt(scanner.nextLine());
 
-    private static boolean isDuplicate(String newId) {
-        return productList.stream().anyMatch(product -> product.getId().equals(newId));
+            if (isDuplicate(id)) {
+                throw new InvalidProductException("ID da ton tai");
+            }
+
+            System.out.print("Nhap ten: ");
+            String name = scanner.nextLine();
+            System.out.print("Nhap so luong: ");
+            int quantity = Integer.parseInt(scanner.nextLine());
+            System.out.print("Nhap gia: ");
+            double price = Double.parseDouble(scanner.nextLine());
+            System.out.print("Nhap danh muc: ");
+            String category = scanner.nextLine();
+
+            productList.add(new Product(id, name, price, quantity, category));
+            System.out.println("Them thanh cong");
+        } catch (NumberFormatException e) {
+            System.out.println("Sai dinh dang so.");
+        } catch (InvalidProductException e) {
+            System.out.println(e.getMessage());
+        }
     }
 
-    private static void addProduct() {
-        System.out.print("Nhap ID: ");
-        String id = scanner.nextLine();
-
-        if (isDuplicate(id)) {
-            System.out.println("ID da ton tai");
-            return;
-        }
-
-        System.out.print("Nhap ten: ");
-        String name = scanner.nextLine();
-        System.out.print("Nhap so luong: ");
-        int quantity = Integer.parseInt(scanner.nextLine());
-        System.out.print("Nhap gia: ");
-        double price = Double.parseDouble(scanner.nextLine());
-
-        productList.add(new Product(id, name, quantity, price));
-        System.out.println("Them thanh cong");
+    private static boolean isDuplicate(int newId) {
+        return productList.stream().anyMatch(product -> product.getId() == newId);
     }
 
     private static void displayProducts() {
         if (productList.isEmpty()) {
             System.out.println("Danh sach trong.");
         } else {
-            productList.forEach(System.out::println);
+            System.out.println("+-------+----------------------+------------+----------+-----------------+");
+            System.out.println("| ID    | Ten                  | Gia       | So luong | Danh muc        |");
+            System.out.println("+-------+----------------------+------------+----------+-----------------+");
+            productList.forEach(p -> {
+                System.out.printf("| %-5d | %-20s | %-10.2f | %-8d | %-15s |\n",
+                        p.getId(), p.getName(), p.getPrice(), p.getQuantity(), p.getCategory());
+            });
+            System.out.println("+-------+----------------------+------------+----------+-----------------+");
         }
     }
+
     private static void updateQuantity() {
-        System.out.print("Nhap ID: ");
-        String id = scanner.nextLine();
-        for (Product p : productList) {
-            if (p.getId().equals(id)) {
-                System.out.print("Nhap so luong: ");
-                p.setQuantity(Integer.parseInt(scanner.nextLine()));
+        try {
+            System.out.print("Nhap ID: ");
+            int id = Integer.parseInt(scanner.nextLine());
+
+            Optional<Product> optionalProduct = productList.stream()
+                    .filter(p -> p.getId() == id)
+                    .findFirst();
+
+            if (optionalProduct.isPresent()) {
+                Product p = optionalProduct.get();
+                System.out.print("Nhap so luong moi: ");
+                int newQuantity = Integer.parseInt(scanner.nextLine());
+                p.setQuantity(newQuantity);
                 System.out.println("Cap nhap thanh cong");
-                return;
+            } else {
+                throw new InvalidProductException("Khong tim thay sp voi id: " + id);
             }
+        } catch (NumberFormatException e) {
+            System.out.println("Sai dinh dang so.");
+        } catch (InvalidProductException e) {
+            System.out.println(e.getMessage());
         }
-        System.out.println("Khong thay sp.");
     }
+
     private static void deleteOutOfStock() {
         int oldSize = productList.size();
-        productList.removeIf(p -> p.getQuantity() <= 0);
+        productList.removeIf(p -> p.getQuantity() == 0);
         int newSize = productList.size();
-        System.out.println("Da xoa " + (oldSize - newSize) + " sp co quantity <= 0");
+        System.out.println("Da xoa " + (oldSize - newSize) + " sp co quantity = 0");
     }
 }
